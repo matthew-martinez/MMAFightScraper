@@ -1,7 +1,7 @@
 library(tidyverse)
 
-#Elo script from https://raw.githubusercontent.com/infinitelytight/mma-elo/master/mma.r
-  
+# Elo code adapted from: https://raw.githubusercontent.com/infinitelytight/mma-elo/master/mma.r
+
   options(error=traceback)
   options(max.print=999999)
   
