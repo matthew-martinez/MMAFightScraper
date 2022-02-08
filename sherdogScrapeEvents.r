@@ -15,10 +15,8 @@ startTime <- Sys.time()
 loopCounter <- 0
 logDf <- data.frame()
 
-# Random event number error testing
-random <- floor(runif(5000, min=1, max=88000))
-
 # loop through as many iterations as the above counter specifies
+# testing on a handful of potential URLs
 for (i in c(1,2,3,4,43,3432,347,3424)){
   # creating the sherdog URL
   site <- NULL
