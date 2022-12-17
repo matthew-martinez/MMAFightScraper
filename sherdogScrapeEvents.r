@@ -154,7 +154,6 @@ for (i in recordsPull){
         fightRecord$Event <- event
         fightRecord$EventID <- i
         fightRecord$Promotion <- promotion
-        #fightRecord$Promotion <- str_sub(fightRecord$Promotion, start=5)
         fightRecord <- fightRecord %>%
           select(Promotion, Event, EventID, Match, Fighter, FighterID, Result, Opponent, OpponentID, Method, Round, Time, Date)
   
@@ -162,10 +161,9 @@ for (i in recordsPull){
       }
         if (is.na(tables) == TRUE) {
           fightRecord <- mainEvent
-          fightRecord$Event <- event[[1]][1]
+          fightRecord$Event <- event
           fightRecord$EventID <- i
-          fightRecord$Promotion <- str_split(event[[1]][2], "\\t")[[1]][3]
-          #fightRecord$Promotion <- str_sub(fightRecord$Promotion, start=5)
+          fightRecord$Promotion <- promotion
           fightRecord <- fightRecord %>%
             select(Promotion, Event, EventID, Match, Fighter, FighterID, Result, Opponent, OpponentID, Method, Round, Time, Date)
           
