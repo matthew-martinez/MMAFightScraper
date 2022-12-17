@@ -1,5 +1,6 @@
 library(rvest)
 library(httr)
+library(xml2)
 library(stringr)
 library(tidyverse)
 
@@ -15,9 +16,12 @@ startTime <- Sys.time()
 loopCounter <- 0
 logDf <- data.frame()
 
-# loop through as many iterations as the above counter specifies
-# testing on a handful of potential URLs
-for (i in c(1,2,3,4,43,3432,347,3424)){
+saveDir <- "/home/m/Documents/Projects/MMAFightScraper/Data/"
+
+# recordsPull is where the event IDs go
+recordsPull <- c(94042,91795,69285)
+
+for (i in recordsPull){
   # creating the sherdog URL
   site <- NULL
   sessionLogger <- NULL
@@ -28,12 +32,12 @@ for (i in c(1,2,3,4,43,3432,347,3424)){
   print(loopCounter)
   
   # checking to see if URL 404
-  urlCheck <- url_ok(sitePaste)
+  urlCheck <- http_error(sitePaste)
   
   # If URL is 404, then skip scraping
-  if (urlCheck == TRUE){
+  if (urlCheck == FALSE){
   
-    site <- tryCatch(html_session(sitePaste), error=function(e){NA})
+    site <- tryCatch(session(sitePaste), error=function(e){NA})
     
     # creating a log to see if any attempts do not become sessions
     sessionLogger <- c(sessionLogger, is.session(site))
@@ -42,9 +46,10 @@ for (i in c(1,2,3,4,43,3432,347,3424)){
     logDf <- rbind(logDf, logDfTemp)
     
     # reading in date
-    eventDate <- site %>% html_nodes(".date") %>% html_text()
-    event <- site %>% html_nodes(".section_title") %>% html_text(trim=TRUE)
-    event <- strsplit(event, "\\\n")
+    eventDate <- site %>% html_nodes("[itemprop='startDate']") %>% html_attr("content")
+    eventDate <- strsplit(eventDate, "T")[[1]][1]
+    event <- site %>% html_nodes(".event_detail") %>% html_nodes("h1") %>% html_text(trim=TRUE)
+    promotion <- site %>% html_nodes(".organization") %>% html_nodes("[itemprop='name']") %>% html_text()
     
     # reading in main event fighters and cleaning
     fightDivLeft <- site %>% html_nodes(".fighter.left_side") %>% html_text(trim=TRUE)
@@ -65,7 +70,7 @@ for (i in c(1,2,3,4,43,3432,347,3424)){
     
       # selecting only the first element of the list of data frames and creating an individual fight record
       mainEvent <- mainEventTablesParsed[[1]]
-      mainEvent$Date <- eventDate[2]
+      mainEvent$Date <- eventDate
       
       # haphazard method for obtaining the fighter URLs to use as IDs
       fightDivLeftDIV <- site %>% html_nodes(".fighter.left_side")
@@ -121,7 +126,7 @@ for (i in c(1,2,3,4,43,3432,347,3424)){
         
         # selecting only the first element of the list of data frames and creating an individual fight record
         fightRecord <- tablesParsed[[1]]
-        fightRecord$Date <- eventDate[2]
+        fightRecord$Date <- eventDate
         fightRecord <- fightRecord %>%
           mutate(Result = if_else(str_detect(X5, "DrawN/A"), "Draw", "Win"))
         
@@ -146,9 +151,9 @@ for (i in c(1,2,3,4,43,3432,347,3424)){
         fightRecord$Opponent[fightRecord$Result == "Win"] <- str_sub(fightRecord$Opponent[fightRecord$Result == "Win"], end=-5)
         
         fightRecord <- rbind(mainEvent, fightRecord)
-        fightRecord$Event <- event[[1]][1]
+        fightRecord$Event <- event
         fightRecord$EventID <- i
-        fightRecord$Promotion <- str_split(event[[1]][2], "\\t")[[1]][3]
+        fightRecord$Promotion <- promotion
         #fightRecord$Promotion <- str_sub(fightRecord$Promotion, start=5)
         fightRecord <- fightRecord %>%
           select(Promotion, Event, EventID, Match, Fighter, FighterID, Result, Opponent, OpponentID, Method, Round, Time, Date)
@@ -170,10 +175,13 @@ for (i in c(1,2,3,4,43,3432,347,3424)){
   }
 }
 
-fullRecords$Date <- as.Date(fullRecords$Date, "%b %d, %Y")
+fullRecords$Date <- as.Date(fullRecords$Date, "%Y-%m-%d")
 
 endTime <- Sys.time()
 endTime - startTime
 
-write.csv(logDf, "/home/m/Documents/R/MMA/urlLog1to5000.csv")
-write.csv(fullRecords, "/home/m/Documents/R/MMA/eventRecords1to5000.csv")
+saveLog <- paste0(saveDir, "event-log", recordsPull[1], ".csv")
+saveFile <- paste0(saveDir, "event-records", recordsPull[1], ".csv")
+
+write.csv(logDf, saveLog)
+write.csv(fullRecords, saveFile)
