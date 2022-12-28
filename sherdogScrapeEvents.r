@@ -19,7 +19,7 @@ logDf <- data.frame()
 saveDir <- "/home/m/Documents/Projects/MMAFightScraper/Data/"
 
 # recordsPull is where the event IDs go
-recordsPull <- c(94042,91795,80137,93531, 93833, 93861,92207, 92224, 92510)
+recordsPull <- c(94042,91795,80137,94909,93531, 93833, 93861,92207, 92224, 92510)
 
 for (i in recordsPull) {
   # creating the sherdog URL
@@ -37,13 +37,15 @@ for (i in recordsPull) {
   site <- tryCatch(session(sitePaste), error=function(e){NA})
   
   # checking if event actually happened
-  
-  yetToCome <- site %>% html_nodes(".final_result.yet_to_come") %>% html_text(trim=TRUE)
-  yetToCome <- yetToCome[1]
-  
-  # If URL is 404, then skip scraping
-  if (!urlCheck & is.na(yetToCome)) {
+  if (!urlCheck){
+    yetToCome <- site %>% html_nodes(".final_result.yet_to_come") %>% html_text(trim=TRUE)
+    yetToCome <- yetToCome[1]
+  }
 
+  # If URL is 404, then skip scraping
+  if (urlCheck == FALSE & is.na(yetToCome)) {
+    
+    site <- tryCatch(session(sitePaste), error=function(e){NA})
     # creating a log to see if any attempts do not become sessions
     sessionLogger <- c(sessionLogger, is.session(site))
     urlLogger <- c(urlLogger, sitePaste)
