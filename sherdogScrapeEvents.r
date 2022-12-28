@@ -19,9 +19,9 @@ logDf <- data.frame()
 saveDir <- "/home/m/Documents/Projects/MMAFightScraper/Data/"
 
 # recordsPull is where the event IDs go
-recordsPull <- c(94042,91795,69285)
+recordsPull <- c(94042,91795,80137,93531, 93833, 93861,92207, 92224, 92510)
 
-for (i in recordsPull){
+for (i in recordsPull) {
   # creating the sherdog URL
   site <- NULL
   sessionLogger <- NULL
@@ -34,11 +34,16 @@ for (i in recordsPull){
   # checking to see if URL 404
   urlCheck <- http_error(sitePaste)
   
-  # If URL is 404, then skip scraping
-  if (urlCheck == FALSE){
+  site <- tryCatch(session(sitePaste), error=function(e){NA})
   
-    site <- tryCatch(session(sitePaste), error=function(e){NA})
-    
+  # checking if event actually happened
+  
+  yetToCome <- site %>% html_nodes(".final_result.yet_to_come") %>% html_text(trim=TRUE)
+  yetToCome <- yetToCome[1]
+  
+  # If URL is 404, then skip scraping
+  if (!urlCheck & is.na(yetToCome)) {
+
     # creating a log to see if any attempts do not become sessions
     sessionLogger <- c(sessionLogger, is.session(site))
     urlLogger <- c(urlLogger, sitePaste)
@@ -50,6 +55,10 @@ for (i in recordsPull){
     eventDate <- strsplit(eventDate, "T")[[1]][1]
     event <- site %>% html_nodes(".event_detail") %>% html_nodes("h1") %>% html_text(trim=TRUE)
     promotion <- site %>% html_nodes(".organization") %>% html_nodes("[itemprop='name']") %>% html_text()
+    
+    if (identical(promotion, character(0))) { 
+      promotion <- "NO PROMOTION"
+    } 
     
     # reading in main event fighters and cleaning
     fightDivLeft <- site %>% html_nodes(".fighter.left_side") %>% html_text(trim=TRUE)
